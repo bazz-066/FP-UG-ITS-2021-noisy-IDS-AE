@@ -142,12 +142,12 @@ def aeids(phase = "training", filename = "", protocol="tcp", port="80", hidden_l
         if tensorboard_log_enabled and backend == "tensorflow":
             tensorboard_callback = TensorBoard(log_dir="./logs", batch_size=10000, write_graph=True, write_grads=True,
                                                histogram_freq=1)
-            autoencoder.fit_generator(byte_freq_generator(filename, protocol, port, batch_size), steps_per_epoch=100,
+            autoencoder.fit(byte_freq_generator(filename, protocol, port, batch_size), steps_per_epoch=100,
                                       epochs=100, verbose=1, callbacks=[tensorboard_callback])
             check_directory(filename, "models")
             autoencoder.save("models/{}/aeids-with-log-{}-hl{}-af{}-do{}.hdf5".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout), overwrite=True)
         else:
-            autoencoder.fit_generator(byte_freq_generator(filename, protocol, port, batch_size), steps_per_epoch=steps_per_epoch,
+            autoencoder.fit(byte_freq_generator(filename, protocol, port, batch_size), steps_per_epoch=steps_per_epoch,
                                       epochs=10, verbose=1)
             check_directory(filename, "models")
             autoencoder.save("models/{}/aeids-{}-hl{}-af{}-do{}.hdf5".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout), overwrite=True)
@@ -506,7 +506,7 @@ def get_pcap_file_fullpath(filename):
 def open_conn():
     global conn
 
-    conn = psycopg2.connect(host="localhost", database="aeids", user="postgres", password="postgres")
+    conn = psycopg2.connect(host="localhost", database="aeids", user="postgres", password="")
     conn.set_client_encoding('Latin1')
 
 
@@ -549,10 +549,9 @@ def get_message_id(buffered_packet):
         row = cursor.fetchone()
         return row["id"]
     else:
-        cursor.execute("""INSERT INTO messages (src_ip, src_port, dst_ip, dst_port, protocol, start_time, stop_time, """
-                       """payload, window_size) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+        cursor.execute("""INSERT INTO messages (src_ip, src_port, dst_ip, dst_port, protocol, start_time, stop_time, window_size) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                        (src_addr, src_port, dst_addr, dst_port, protocol, start_time, stop_time,
-                        psycopg2.Binary(buffered_packet.get_payload("server")), WINDOW_SIZE))
+                        WINDOW_SIZE))
         if cursor.rowcount == 1:
             row = cursor.fetchone()
             conn.commit()
