@@ -1,51 +1,20 @@
 from BufferedPackets import WINDOW_SIZE
-from keras.callbacks import TensorBoard
-from keras.models import load_model
-from keras.models import Model
-from keras.layers import Dense, Input, Dropout
-# from keras.models import model_from_json
-# from LibNidsReaderThread import LibNidsReaderThread
-# from PcapReaderThread import PcapReaderThread
-from StreamReaderThread import StreamReaderThread
-# from tensorflow import Tensor
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.models import load_model
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Input, Dropout
 
-# import binascii
+from StreamReaderThread import StreamReaderThread
+
 import math
 import numpy
 import os
 import psycopg2
 import psycopg2.extras
 import sys
-# import thread
 import time
 import traceback
 
-# import csv
-
-# def main(argv):
-#     try:
-#         root_directory = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
-#         filename = root_directory + sys.argv[1]
-#         prt = PcapReaderThread(filename)
-#         prt.run()
-#
-#         while not prt.done:
-#             print "sleeping"
-#             time.sleep(1)
-#
-#         while prt.has_ready_message():
-#             bp = prt.pop_connection()
-#             print bp.get_payload()
-#
-#         print "DIE YOU!!!"
-#
-#     except IndexError:
-#         print "Usage : python aeids.py filename [training|testing]"
-#     except KeyboardInterrupt:
-#         print "Good bye to you my trusted friend"
-# root_directory = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
-# root_directory = "/home/baskoro/Documents/Dataset/HTTP-Attack-Dataset/morphed-shellcode-attacks/"
-# root_directory = "/home/baskoro/Documents/Dataset/HTTP-Attack-Dataset/shellcode-attacks/"
 tensorboard_log_enabled = False
 backend = "tensorflow"
 done = False
@@ -56,7 +25,6 @@ conn = None
 
 # possible values: mean, median, zscore
 threshold = "median"
-
 
 def main(argv):
     try:
