@@ -10,16 +10,14 @@ import threading
 TIMEOUT = 2
 end_states = (STATE_CLOSE, STATE_RESET, STATE_TIMEOUT)
 
-filename = 'noisy_port-21_percentage-0.0.pcap'
-#filename = 'noisy_port-21_percentage-0.001.pcap'
-#filename = 'noisy_port-21_percentage-0.002.pcap'
-#filename = 'noisy_port-21_percentage-0.003.pcap'
-#filename = 'noisy_port-21_percentage-0.0005.pcap'
+#filename = 'combined-00021.pcap'
+#filename = 'noisy_port-25_percentage-0.001.pcap'
+#filename = 'noisy_port-25_percentage-0.0.pcap'
 
 class StreamReaderThread(threading.Thread):
     def __init__(self, filename, protocol, port):
         threading.Thread.__init__(self)
-        self.pcap = pcapy.open_offline('combined-00021.pcap')
+        self.pcap = pcapy.open_offline('noisy_port-80_percentage-0.0.pcap')
         self.tcp_buffer = {}
         self.ready_tcp_buffer = []
         self.last_read_index = -1
