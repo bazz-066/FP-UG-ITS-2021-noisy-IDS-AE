@@ -14,6 +14,8 @@ import psycopg2.extras
 import sys
 import time
 import traceback
+import csv
+from datetime import datetime
 
 tensorboard_log_enabled = False
 backend = "tensorflow"
@@ -116,7 +118,7 @@ def aeids(phase = "training", filename = "", protocol="tcp", port="80", hidden_l
             autoencoder.save("models/{}/aeids-with-log-{}-hl{}-af{}-do{}.hdf5".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout), overwrite=True)
         else:
             autoencoder.fit(byte_freq_generator(filename, protocol, port, batch_size), steps_per_epoch=steps_per_epoch,
-                                      epochs=10, verbose=1)
+                                      epochs=1, verbose=1)
             check_directory(filename, "models")
             autoencoder.save("models/{}/aeids-{}-hl{}-af{}-do{}.hdf5".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout), overwrite=True)
 
@@ -132,10 +134,14 @@ def aeids(phase = "training", filename = "", protocol="tcp", port="80", hidden_l
         done = True
         print("\nFinished.")
     elif phase == "testing":
+        start = datetime.now()
         autoencoder = load_autoencoder(filename, protocol, port, hidden_layers, activation_function, dropout)
         predict_byte_freq_generator(autoencoder, filename, protocol, port, hidden_layers, activation_function, dropout, phase, testing_filename)
         prt = None
         print("\nFinished.")
+        end = datetime.now()
+        time_taken = end - start
+        print('Time: ', time_taken)
     else:
         raise IndexError
 
@@ -263,18 +269,18 @@ def predict_byte_freq_generator(autoencoder, filename, protocol, port, hidden_la
     if phase == "testing":
         t1, t2 = load_threshold(filename, protocol, port, hidden_layers, activation_function, dropout)
         check_directory(filename, "results")
-        # fresult = open("results/{}/result-{}-hl{}-af{}-do{}-{}.csv".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout, testing_filename), "w")
+        #fresult = open("results/{}/result-{}-hl{}-af{}-do{}-{}.csv".format(filename, protocol + port, ",".join(hidden_layers), activation_function, dropout, testing_filename), "w")
         open_conn()
         experiment_id = create_experiment(filename, testing_filename, protocol, port, ",".join(hidden_layers), activation_function, dropout)
-        # if fresult is None:
-        #     raise Exception("Could not create file")
+        #if fresult is None:
+            #raise Exception("Could not create file")
 
-    # ftemp = open("results/data.txt", "wb")
-    # fcsv = open("results/data.csv", "wb")
-    # a = csv.writer(fcsv, quoting=csv.QUOTE_ALL)
-    # time.sleep(2)
+    #ftemp = open("results/data.txt", "w")
+    #fcsv = open("results/data.csv", "w")
+    #a = csv.writer(fcsv, quoting=csv.QUOTE_ALL)
+    #time.sleep(2)
     i_counter = 0
-    # for i in range(0,10):
+    #for i in range(0,10):
     while (not prt.done) or (prt.has_ready_message()):
         if not prt.has_ready_message():
             prt.wait_for_data()
@@ -286,24 +292,25 @@ def predict_byte_freq_generator(autoencoder, filename, protocol, port, hidden_la
                 continue
 
             i_counter += 1
-            # print "{}-{}".format(i_counter, buffered_packets.id)
-            # print "{}-{}: {}".format(i_counter, buffered_packets.id, buffered_packets.get_payload("server")[:100])
+            #print("{}-{}".format(i_counter, buffered_packets.id))
+            print("{}-{}: {}".format(i_counter, buffered_packets.id, buffered_packets.get_payload("server")))
             byte_frequency = buffered_packets.get_byte_frequency("server")
-            # ftemp.write(buffered_packets.get_payload())
-            # a.writerow(byte_frequency)
+            print(byte_frequency)
+            ##ftemp.write(buffered_packets.get_payload("server"))
+            #a.writerow(byte_frequency)
             data_x = numpy.reshape(byte_frequency, (1, 256))
             decoded_x = autoencoder.predict(data_x)
-            # a.writerow(decoded_x[0])
+            #a.writerow(decoded_x[0])
 
-            # fcsv.close()
+            #fcsv.close()
             error = numpy.mean((decoded_x - data_x) ** 2, axis=1)
-            # ftemp.write("\r\n\r\n{}".format(error))
-            # ftemp.close()
+            #ftemp.write("\r\n\r\n{}".format(error))
+            #ftemp.close()
             if phase == "training" or phase == "predicting":
                 errors_list.append(error)
             elif phase == "testing":
                 decision = decide(error[0], t1, t2)
-                # fresult.write("{},{},{},{},{},{}\n".format(buffered_packets.id, error[0], decision[0], decision[1], decision[2], buffered_packets.get_hexlify_payload()))
+                #fresult.write("{},{},{},{},{}\n".format(buffered_packets.id, error[0], decision[0], decision[1], decision[2]))
                 write_results_to_db(experiment_id, buffered_packets, error, decision)
 
             counter += 1
@@ -316,7 +323,7 @@ def predict_byte_freq_generator(autoencoder, filename, protocol, port, hidden_la
         save_q3_iqr(filename, protocol, port, hidden_layers, activation_function, dropout, errors_list)
         save_median_mad(filename, protocol, port, hidden_layers, activation_function, dropout, errors_list)
     elif phase == "testing":
-        # fresult.close()
+        #fresult.close()
         return
 
 
